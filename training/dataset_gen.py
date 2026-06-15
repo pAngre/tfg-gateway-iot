@@ -43,11 +43,11 @@ def generate_dataset(config_path, samples_per_class=1000):
             sensor._SensorSimulator__amp = np.random.uniform(0.5, 2)
 
             for _ in range(200):
-                sensor.get_reading() # Calentar el sensor
+                sensor.get_reading()
 
             window = []
 
-            for _ in range(config.sensor_send_interval):  # Num muestras
+            for _ in range(config.sensor_send_interval):
                 window.append(sensor.get_reading())
 
             features = extract_features(window)
@@ -59,9 +59,9 @@ def generate_dataset(config_path, samples_per_class=1000):
 
 
 if __name__ == "__main__":
-    X, y = generate_dataset("config.yaml", samples_per_class=1000)
+    X, y = generate_dataset("../config.yaml", samples_per_class=1000)
 
-    np.save("dataset/X.npy", X)
-    np.save("dataset/y.npy", y)
+    np.save("../dataset/X.npy", X)
+    np.save("../dataset/y.npy", y)
 
     print("Dataset generado:", X.shape, y.shape)

@@ -116,7 +116,7 @@ class LocalMLGateway:
         self.__mqtt_client.publish_reading({"test_complete": True}, topic='exit')
 
 if __name__ == "__main__":
-    config = 'config.yaml'
+    config = '../config.yaml'
 
     try:
         localML = LocalMLGateway(config)

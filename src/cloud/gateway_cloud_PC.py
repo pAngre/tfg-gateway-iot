@@ -17,14 +17,14 @@ class CloudMLTesting:
         self.__mqtt_client = MqttInterface(self.__system_config, self.__on_message)
 
         # ===== MODELO =====
-        self.__interpreter = tflite.Interpreter(model_path="dataset/model.tflite")
+        self.__interpreter = tflite.Interpreter(model_path="../../dataset/model.tflite")
         self.__interpreter.allocate_tensors()
 
         self.__input_details = self.__interpreter.get_input_details()
         self.__output_details = self.__interpreter.get_output_details()
 
-        self.__mean = np.load("dataset/mean.npy")
-        self.__std = np.load("dataset/std.npy")
+        self.__mean = np.load("../../dataset/mean.npy")
+        self.__std = np.load("../../dataset/std.npy")
 
         # ===== MÉTRICAS =====
         self.__pred_history = []
@@ -70,7 +70,7 @@ class CloudMLTesting:
             pass
 
 if __name__ == "__main__":
-    config = 'config.yaml'
+    config = '../../config.yaml'
 
     try:
         cloudPC = CloudMLTesting(config)
