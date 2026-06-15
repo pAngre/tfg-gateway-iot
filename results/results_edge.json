@@ -1,0 +1,10 @@
+{
+    "accuracy": 99.9325,
+    "fallos": 27,
+    "fallos_basicos": 470,
+    "accuracy_basica": 98.825,
+    "avg_inf_latency": 0.007955527728796005,
+    "avg_latency": 1.00941022468728,
+    "total_changes": 1326,
+    "total_samples": 40000
+}

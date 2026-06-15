@@ -1,0 +1,6 @@
+dataset/*.npy
+dataset/*.tflite
+__pycache__/
+*.pyc
+*.egg-info
+.env

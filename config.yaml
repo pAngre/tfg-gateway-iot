@@ -1,0 +1,23 @@
+##################################################
+#TFG - Gateway IOT con Edge ML sobre Linux Embebido con Yocto
+#
+#Author: Pablo Angresola Sanchez
+
+##################################################
+
+# Configuration file
+
+# MQTT broker details
+mqtt:
+  broker: "192.168.0.101"
+  port: 1883
+  topics:
+    write: "sensor"
+    read: "sensor/+"
+
+# Sensor simulator settings
+sensor:
+  fs: 100 # Sampling frequency in HZ
+  send_interval: 50 # Number of samples to send in each MQTT message
+  freq: 5 # Frequency of simulated signal in Hz
+  amp: 1.5 # Amplitude of simulated signal
