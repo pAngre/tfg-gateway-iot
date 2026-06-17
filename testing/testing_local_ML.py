@@ -25,32 +25,37 @@ class LocalMLGateway:
         self.__system_config = SystemConfig(__conf_file)
         self.__sensor_sim = SensorSimulator(self.__system_config)
         self.__buffer = []
-        self.__interpreter = tflite.Interpreter(model_path="../dataset/model.tflite")
+        self.__interpreter = tflite.Interpreter(model_path="dataset/model.tflite")
         self.__interpreter.allocate_tensors()
 
         self.__input_details = self.__interpreter.get_input_details()
         self.__output_details = self.__interpreter.get_output_details()
 
-        self.__mean = np.load("../dataset/mean.npy")
-        self.__std = np.load("../dataset/std.npy")
+        self.__mean = np.load("dataset/mean.npy")
+        self.__std = np.load("dataset/std.npy")
 
         self.__pred_history = []
         self.__history_size = 3
-        self.__pred_ant = 0
 
         self.__total = 0
         self.__fallo = 0
         self.__fallo_basic = 0
-        self.__acc = 1
-        self.__acc_basic = 1
         self.__avg_inf_latency = []
+        self.__avg_latency = []
+        self.__total_changes = 0
+
+        self.__total_iter = 0
+        self.__fallo_iter = 0
+        self.__fallo_basic_iter = 0
+        self.__avg_inf_latency_iter = []
+        self.__avg_latency_iter = []
+        self.__total_changes_iter = 0
+
+        self.__iteration_results = []
 
         self.__last_state = None
         self.__change_time = None
         self.__waiting = False
-        self.__avg_latency = []
-        self.__total_changes = 0
-
 
         self.__normal = 0
         self.__fault_light = 0
@@ -76,7 +81,21 @@ class LocalMLGateway:
             np.max(signal) - np.min(signal),
             np.std(np.diff(signal))
         ]
+    
+    def __reset_iter_counters(self):
+        self.__total_iter = 0
+        self.__fallo_iter = 0
+        self.__fallo_basic_iter = 0
+        self.__avg_inf_latency_iter = []
+        self.__avg_latency_iter = []
+        self.__total_changes_iter = 0
 
+        self.__normal = 0
+        self.__fault_light = 0
+        self.__fault_severe = 0
+
+        self.__pred_history = []
+        
     def run(self):
 
         mapping = {
@@ -85,7 +104,9 @@ class LocalMLGateway:
             "fault_severe": 2
         }
 
-        for _ in range(5):
+        for i in range(5):
+            self.__reset_iter_counters()
+
             self.__freq = np.random.uniform(3, 7)
             self.__amp = np.random.uniform(0.5, 2)
 
@@ -111,6 +132,7 @@ class LocalMLGateway:
                     self.__waiting = True
                     self.__last_state = current_state
                     self.__total_changes += 1
+                    self.__total_changes_iter += 1
 
                 for _ in range(1000):
                     sample = self.__sensor_sim.get_reading()
@@ -133,7 +155,9 @@ class LocalMLGateway:
                         inf_latency = time.time() - change_inf_time
 
                         self.__avg_inf_latency.append(inf_latency)
+                        self.__avg_inf_latency_iter.append(inf_latency)
                         self.__total += 1
+                        self.__total_iter += 1
 
                         self.__pred_history.append(pred)
                         if len(self.__pred_history) > self.__history_size:
@@ -143,23 +167,41 @@ class LocalMLGateway:
                         if self.__waiting and pred_final == current_state:
                             latency = time.time() - self.__change_time
                             self.__avg_latency.append(latency)
+                            self.__avg_latency_iter.append(latency)
                             self.__waiting = False
 
                         if pred_final != mapping[self.__sensor_sim.state] and not self.__waiting:
                             self.__fallo += 1
+                            self.__fallo_iter += 1
 
                         if pred != mapping[self.__sensor_sim.state]:
                             self.__fallo_basic += 1
+                            self.__fallo_basic_iter += 1
                             
                         self.__buffer = []
 
                     time.sleep(1 / self.__sensor_sim.fs)
 
-            print(f"Prubas con freq: {self.__freq:.2f} Hz y amp: {self.__amp:.2f}. Normal: {self.__normal}, Fault Light: {self.__fault_light}, Fault Severe: {self.__fault_severe}")
-            self.__normal = 0
-            self.__fault_light = 0
-            self.__fault_severe = 0
-        
+            iter_results = {
+                "iter" : i + 1,
+                "freq": round(self.__freq, 2),
+                "amp": round(self.__amp, 2),
+                "fallos": self.__fallo_iter,
+                "accuracy": round(((self.__total_iter - self.__fallo_iter) / self.__total_iter) * 100, 4),
+                "fallos_basicos": self.__fallo_basic_iter,
+                "accuracy_basica": round(((self.__total_iter - self.__fallo_basic_iter) / self.__total_iter) * 100, 4),
+                "avg_inf_latency": round(np.mean(self.__avg_inf_latency_iter), 4),
+                "avg_latency": round(np.mean(self.__avg_latency_iter), 4),
+                "total_changes": self.__total_changes_iter,
+                "total_samples": self.__total_iter
+            }
+            self.__iteration_results.append(iter_results)
+
+        acc_values = [r["accuracy"] for r in self.__iteration_results]
+        acc_basic_values = [r["accuracy_basica"] for r in self.__iteration_results]
+        lat_inf_values = [r["avg_inf_latency"] for r in self.__iteration_results]
+        lat_det_values = [r["avg_latency"] for r in self.__iteration_results]
+
         payload = {
                     "accuracy": ((self.__total - self.__fallo) / self.__total) * 100,
                     "fallos": self.__fallo,
@@ -168,14 +210,21 @@ class LocalMLGateway:
                     "avg_inf_latency": np.mean(self.__avg_inf_latency) if self.__avg_inf_latency else 0,
                     "avg_latency": np.mean(self.__avg_latency) if self.__avg_latency else 0,
                     "total_changes": self.__total_changes,
-                    "total_samples": self.__total
+                    "total_samples": self.__total,
+                    "std_accuracy": round(float(np.std(acc_values)), 4),
+                    "std_accuracy_basica": round(float(np.std(acc_basic_values)), 4),
+                    "std_avg_inf_latency": round(float(np.std(lat_inf_values)), 4),
+                    "std_avg_latency": round(float(np.std(lat_det_values)), 4),
+                    "min_accuracy": round(float(np.min(acc_values)), 4),
+                    "max_accuracy": round(float(np.max(acc_values)), 4),
+                    "iteration_results": self.__iteration_results
                 }
         print(json.dumps(payload, indent=4))
-        with open('../results/results_local.json', 'w', encoding='utf-8') as f:
+        with open('results/results_local.json', 'w', encoding='utf-8') as f:
             json.dump(payload, f, ensure_ascii=False, indent=4)
 
 if __name__ == "__main__":
-    config = '../config.yaml'
+    config = 'config.yaml'
 
     try:
         localML = LocalMLGateway(config)

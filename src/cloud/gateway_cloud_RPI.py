@@ -75,7 +75,7 @@ class LocalMLGateway:
             time.sleep(1 / self.__sensor_sim.fs)
 
 if __name__ == "__main__":
-    config = '../../config.yaml'
+    config = 'config.yaml'
 
     try:
         localML = LocalMLGateway(config)

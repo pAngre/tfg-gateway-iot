@@ -5,16 +5,16 @@ from sklearn.preprocessing import StandardScaler
 import joblib
 
 # cargar dataset
-X = np.load("../dataset/X.npy")
-y = np.load("../dataset/y.npy")
+X = np.load("dataset/X.npy")
+y = np.load("dataset/y.npy")
 
 # normalizar
 scaler = StandardScaler()
 X = scaler.fit_transform(X)
 
-joblib.dump(scaler, "../dataset/scaler.pkl")
-np.save("../dataset/mean.npy", scaler.mean_)
-np.save("../dataset/std.npy", scaler.scale_)
+joblib.dump(scaler, "dataset/scaler.pkl")
+np.save("dataset/mean.npy", scaler.mean_)
+np.save("dataset/std.npy", scaler.scale_)
 
 X_train, X_test, y_train, y_test = train_test_split(
     X, y, test_size=0.2, random_state=42

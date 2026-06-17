@@ -27,14 +27,14 @@ class LocalMLGateway:
         self.__mqtt_client = MqttInterface(self.__system_config, self.__mqtt_on_message)
         self.__sensor_sim = SensorSimulator(self.__system_config)
         self.__buffer = []
-        self.__interpreter = tflite.Interpreter(model_path="../../dataset/model.tflite")
+        self.__interpreter = tflite.Interpreter(model_path="dataset/model.tflite")
         self.__interpreter.allocate_tensors()
 
         self.__input_details = self.__interpreter.get_input_details()
         self.__output_details = self.__interpreter.get_output_details()
 
-        self.__mean = np.load("../../dataset/mean.npy")
-        self.__std = np.load("../../dataset/std.npy")
+        self.__mean = np.load("dataset/mean.npy")
+        self.__std = np.load("dataset/std.npy")
 
         self.__pred_history = []
         self.__history_size = 3
@@ -111,7 +111,7 @@ class LocalMLGateway:
             time.sleep(1 / self.__sensor_sim.fs)
 
 if __name__ == "__main__":
-    config = '../../config.yaml'
+    config = 'config.yaml'
 
     try:
         localML = LocalMLGateway(config)

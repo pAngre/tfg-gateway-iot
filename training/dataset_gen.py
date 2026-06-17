@@ -59,9 +59,9 @@ def generate_dataset(config_path, samples_per_class=1000):
 
 
 if __name__ == "__main__":
-    X, y = generate_dataset("../config.yaml", samples_per_class=1000)
+    X, y = generate_dataset("config.yaml", samples_per_class=1000)
 
-    np.save("../dataset/X.npy", X)
-    np.save("../dataset/y.npy", y)
+    np.save("dataset/X.npy", X)
+    np.save("dataset/y.npy", y)
 
     print("Dataset generado:", X.shape, y.shape)
